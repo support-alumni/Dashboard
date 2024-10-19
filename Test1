@@ -1,0 +1,94 @@
+from flask import Flask, redirect, request, session, url_for
+import requests
+import json
+
+app = Flask(__name__)
+app.secret_key = 'Mah12345'  # You should replace this with a more secure key
+
+# LinkedIn App credentials (Replace with your actual client_id and client_secret)
+CLIENT_ID = '8646rxftgq9t17'
+CLIENT_SECRET = 'WPL_AP1.ybsDyCxIbeKMyATs.5KJ3DA=='
+REDIRECT_URI = 'http://localhost:5000/callback'  # Update this to match your LinkedIn app's redirect URL
+LINKEDIN_AUTH_URL = "https://www.linkedin.com/oauth/v2/authorization"
+LINKEDIN_TOKEN_URL = "https://www.linkedin.com/oauth/v2/accessToken"
+LINKEDIN_PROFILE_URL = "https://api.linkedin.com/v2/me"
+LINKEDIN_EMAIL_URL = "https://api.linkedin.com/v2/emailAddress?q=members&projection=(elements*(handle~))"
+
+# Step 1: Route for LinkedIn Login
+@app.route('/login')
+def login():
+    # The URL to redirect the user to LinkedIn’s OAuth 2.0 page for authorization
+    linkedin_auth_url = (
+        f"{LINKEDIN_AUTH_URL}?response_type=code"
+        f"&client_id={CLIENT_ID}"
+        f"&redirect_uri={REDIRECT_URI}"
+        f"&state=random_unique_state"
+        f"&scope=r_liteprofile%20r_emailaddress"
+    )
+    return redirect(linkedin_auth_url)
+
+# Step 2: LinkedIn Callback URL to handle the LinkedIn response
+@app.route('/callback')
+def callback():
+    # Get the authorization code from LinkedIn
+    code = request.args.get('code')
+    
+    if code:
+        # Exchange the authorization code for an access token
+        token_response = requests.post(LINKEDIN_TOKEN_URL, data={
+            'grant_type': 'authorization_code',
+            'code': code,
+            'redirect_uri': REDIRECT_URI,
+            'client_id': CLIENT_ID,
+            'client_secret': CLIENT_SECRET
+        })
+        
+        # Parse the token response JSON
+        token_json = token_response.json()
+        access_token = token_json.get('access_token')
+
+        if access_token:
+            # Fetch user profile data from LinkedIn
+            profile_data = requests.get(LINKEDIN_PROFILE_URL, headers={
+                'Authorization': f'Bearer {access_token}'
+            }).json()
+
+            # Fetch user email data from LinkedIn
+            email_data = requests.get(LINKEDIN_EMAIL_URL, headers={
+                'Authorization': f'Bearer {access_token}'
+            }).json()
+
+            # Store user info in session
+            session['profile'] = profile_data
+            session['email'] = email_data
+
+            return redirect(url_for('dashboard'))
+        else:
+            return "Failed to retrieve access token."
+    
+    return "Error: No code received."
+
+# Step 3: Protected route to display user dashboard
+@app.route('/dashboard')
+def dashboard():
+    if 'profile' in session:
+        profile = session['profile']
+        email = session['email']
+        
+        first_name = profile.get('localizedFirstName', 'N/A')
+        last_name = profile.get('localizedLastName', 'N/A')
+        email_address = email['elements'][0]['handle~']['emailAddress']
+
+        return (f"Welcome {first_name} {last_name}!<br>"
+                f"Your LinkedIn email is: {email_address}")
+    else:
+        return redirect(url_for('login'))
+
+# Step 4: Route for logout (clears session data)
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
+
+if __name__ == '__main__':
+    app.run(debug=True)
