@@ -6,7 +6,7 @@ import os
 linkedin_app = Flask(__name__)
 
 # Set your secret key directly in the code (consider using environment variables for security)
-linkedin_app.secret_key = 'Mmp1868397Iranhomebaba!'  # Your secret key
+linkedin_app.secret_key = 'Mah12345!'  # Your secret key
 
 # Use your actual LinkedIn client ID and secret directly in the code
 CLIENT_ID = '8646rxftgq9t17'  # Your actual client ID
