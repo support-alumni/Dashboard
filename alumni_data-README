@@ -1,0 +1,1 @@
+This application uses proxycurl-api to retrieve alumni LinkedIn data in json format. The function json-csv converts the json format into csv format and then organizes the data into dataframes. Also, it connects to the server to update the data on the database.
