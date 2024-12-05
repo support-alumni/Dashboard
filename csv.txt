@@ -1,0 +1,5 @@
+name,major,position,email,graduation_year,university
+John Doe,Computer Science,Software Engineer,john.doe@example.com,2005,UNT
+Jane Smith,Mathematics,Data Scientist,jane.smith@example.com,2008,UNT
+Alice Johnson,Biology,Researcher,alice.johnson@example.com,2001,UNT
+Bob Brown,Physics,Professor,bob.brown@example.com,2003,UNT
